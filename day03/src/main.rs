@@ -26,8 +26,6 @@ fn part1(data: &str) -> usize {
 
         let max: usize = format!("{m1}{m2}").parse().unwrap();
 
-        println!("{m1}{m2} = {max}");
-
         max_jolts.push(max)
     }
 
@@ -59,11 +57,10 @@ fn part2(data: &str) -> usize {
 
         let max_jolt: usize = result_nums.join("").parse().unwrap();
 
-        println!("m: {:?}", max_jolt);
         max_jolts.push(max_jolt)
     }
 
-    println!("{:?}", max_jolts);
+    // println!("{:?}", max_jolts);
 
     max_jolts.iter().sum()
 }
