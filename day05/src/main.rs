@@ -1,4 +1,4 @@
-use std::{collections::HashSet, fs};
+use std::{cmp::max, fs};
 
 fn main() {
     let input = fs::read_to_string("input.txt").unwrap();
@@ -43,26 +43,50 @@ fn part1(data: &str) -> usize {
 }
 
 fn part2(data: &str) -> usize {
+    #[derive(Clone)]
+    struct SimpleRange {
+        start: usize,
+        end: usize,
+    }
+
     let (ranges, _) = data.split_once("\n\n").unwrap();
-    let fresh_ranges: Vec<std::ops::RangeInclusive<usize>> = ranges
+    let mut fresh_ranges: Vec<SimpleRange> = ranges
         .lines()
         .filter_map(|r| {
             let (start, end) = r.split_once("-").unwrap();
             let start: usize = start.parse().unwrap();
             let end: usize = end.parse().unwrap();
-            Some(start..=end)
+            Some(SimpleRange { start, end })
         })
         .collect();
 
-    let mut fresh_ids = HashSet::new();
+    // sort to simplify merge
+    fresh_ranges.sort_by_key(|range| range.start);
 
-    for range in fresh_ranges {
-        for id in range {
-            fresh_ids.insert(id);
+    // merge ranges to reduce compute and dedupe
+    let mut merged_ranges = vec![fresh_ranges[0].clone()];
+
+    for SimpleRange { start, end } in fresh_ranges[1..].iter() {
+        let Some(current_range) = merged_ranges.last_mut() else {
+            break;
+        };
+
+        // overlaps
+        if current_range.end >= *start {
+            current_range.end = max(current_range.end, *end)
+        } else {
+            // add to merged ranges
+            merged_ranges.push(SimpleRange {
+                start: *start,
+                end: *end,
+            })
         }
     }
 
-    fresh_ids.iter().count()
+    merged_ranges
+        .iter()
+        .map(|SimpleRange { start, end }| end - start + 1)
+        .sum()
 }
 
 #[test]
