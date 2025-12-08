@@ -4,10 +4,10 @@ fn main() {
     let input = fs::read_to_string("input.txt").unwrap();
 
     let p1 = part1(&input);
-    // let p2 = part2(&input);
+    let p2 = part2(&input);
 
     println!("Part 1: {}", p1);
-    // println!("Part 2: {}", p2);
+    println!("Part 2: {}", p2);
 }
 
 type PointIndex = usize;
@@ -128,6 +128,52 @@ fn part1(data: &str) -> usize {
     sorted_curcuits_by_size.iter().take(3).product()
 }
 
+fn part2(data: &str) -> usize {
+    let mut points: Vec<Point> = Vec::new();
+    let mut distance_between: Vec<(PointIndex, PointIndex, Distance)> = Vec::new();
+    for row in data.lines() {
+        let vals = row
+            .split(",")
+            .map(|s| s.parse().unwrap())
+            .collect::<Vec<usize>>();
+
+        points.push(Point {
+            x: vals[0],
+            y: vals[1],
+            z: vals[2],
+        });
+    }
+
+    for p1_index in 0..points.len() {
+        for p2_index in (p1_index + 1)..points.len() {
+            // calculate distance between all pair of points
+            distance_between.push((
+                p1_index,
+                p2_index,
+                points[p1_index].distance(&points[p2_index]),
+            ));
+        }
+    }
+
+    distance_between.sort_by_key(|&(_, _, distance)| distance);
+
+    let mut uf = UnionFind::new(points.len());
+
+    let mut last_connection = (0, 0);
+    for (p1_idx, p2_idx, _distance) in distance_between.iter() {
+        // actual merge of different circuits
+        if uf.find(*p1_idx) != uf.find(*p2_idx) {
+            uf.union(*p1_idx, *p2_idx);
+            last_connection = (*p1_idx, *p2_idx);
+        }
+    }
+
+    let p1 = &points[last_connection.0];
+    let p2 = &points[last_connection.1];
+
+    p1.x * p2.x
+}
+
 #[test]
 fn test_p1() {
     let data = r"162,817,812
@@ -152,4 +198,30 @@ fn test_p1() {
 425,690,689";
 
     assert_eq!(part1(data), 40)
+}
+
+#[test]
+fn test_p2() {
+    let data = r"162,817,812
+57,618,57
+906,360,560
+592,479,940
+352,342,300
+466,668,158
+542,29,236
+431,825,988
+739,650,466
+52,470,668
+216,146,977
+819,987,18
+117,168,530
+805,96,715
+346,949,466
+970,615,88
+941,993,340
+862,61,35
+984,92,344
+425,690,689";
+
+    assert_eq!(part2(data), 25272)
 }
